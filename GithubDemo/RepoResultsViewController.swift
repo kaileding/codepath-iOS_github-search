@@ -8,14 +8,17 @@
 
 import UIKit
 import MBProgressHUD
+import AFNetworking
 
 // Main ViewController
-class RepoResultsViewController: UIViewController {
+class RepoResultsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
 
+    @IBOutlet weak var repoTable: UITableView!
+    
     var searchBar: UISearchBar!
     var searchSettings = GithubRepoSearchSettings()
 
-    var repos: [GithubRepo]!
+    var repos: [GithubRepo] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,6 +33,10 @@ class RepoResultsViewController: UIViewController {
 
         // Perform the first search when the view controller first loads
         doSearch()
+        
+        self.repoTable.estimatedRowHeight = 550.0
+        self.repoTable.rowHeight = UITableViewAutomaticDimension
+        
     }
 
     // Perform the search.
@@ -43,13 +50,38 @@ class RepoResultsViewController: UIViewController {
             // Print the returned repositories to the output window
             for repo in newRepos {
                 print(repo)
-            }   
+            }
+            self.repos = newRepos
+            self.repoTable.reloadData()
 
             MBProgressHUD.hide(for: self.view, animated: true)
             }, error: { (error) -> Void in
                 print(error)
         })
     }
+    
+    
+    
+    // MARK: Table View delegate functions
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return self.repos.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "repoCell", for: indexPath) as! RepoTableViewCell
+        
+        cell.titleLabel.text = self.repos[indexPath.row].name!
+        cell.starsNumber.text = "\(self.repos[indexPath.row].stars!)"
+        cell.forksNumber.text = "\(self.repos[indexPath.row].forks!)"
+        cell.owner.text = self.repos[indexPath.row].ownerHandle
+        cell.ownerImage.setImageWith(URL(string: self.repos[indexPath.row].ownerAvatarURL!)!)
+        cell.descriptionLabel.text = self.repos[indexPath.row].repoDescription!
+        
+        return cell
+    }
+    
+    
 }
 
 // SearchBar methods
